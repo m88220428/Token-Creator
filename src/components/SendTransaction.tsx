@@ -33,7 +33,7 @@ export const SendTransaction: FC = () => {
             console.log('error', `Transaction failed! ${error?.message}`, signature);
             return;
         }
-    }, [publicKey, notify, connection, sendTransaction]);
+    }, [publicKey, connection, sendTransaction]);
 
     return (
         <div>

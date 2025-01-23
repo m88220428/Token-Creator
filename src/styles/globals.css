@@ -24,3 +24,31 @@ a {
   background-color: #707070;
 }
 
+/* Web3 Wallet Button Styles */
+.wallet-adapter-button {
+  background: linear-gradient(45deg, #9945FF, #19FB9B);
+  border: none;
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+  animation: pulse 2s infinite;
+}
+
+.wallet-adapter-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(153, 69, 255, 0.6);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(153, 69, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(153, 69, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(153, 69, 255, 0);
+  }
+}

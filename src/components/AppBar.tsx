@@ -1,4 +1,5 @@
 import { FC } from 'react';
+import { NetworkToggle } from './NetworkToggle';
 import Link from 'next/link';
 
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
@@ -130,7 +131,8 @@ export const AppBar: FC = (props) => {
               </li>
             </ul>
           </div>
-          <WalletMultiButton className="btn btn-ghost mr-4" />
+          <NetworkToggle />
+          <WalletMultiButton className="mr-4 bg-gradient-to-r from-[#9945FF] to-[#19FB9B] hover:from-[#7a36cc] hover:to-[#14c87c] text-white font-bold px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap min-w-[120px]" />
         </div>
       </div>
       {props.children}

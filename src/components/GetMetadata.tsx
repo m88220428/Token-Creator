@@ -1,4 +1,5 @@
 import { FC, useState, useCallback } from 'react';
+import Image from 'next/image';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { Metadata, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
@@ -14,27 +15,24 @@ export const GetMetadata: FC = () => {
     async (form) => {
       const tokenMint = new PublicKey(form.tokenAddress);
       const metadataPDA = PublicKey.findProgramAddressSync(
-				[
-					Buffer.from("metadata"),
-					PROGRAM_ID.toBuffer(),
-					tokenMint.toBuffer(),
-				],
-				PROGRAM_ID,
-			)[0]
-      console.log(metadataPDA.toBase58());
+        [
+          Buffer.from("metadata"),
+          PROGRAM_ID.toBuffer(),
+          tokenMint.toBuffer(),
+        ],
+        PROGRAM_ID,
+      )[0];
       const metadataAccount = await connection.getAccountInfo(metadataPDA);
-      console.log(metadataAccount);
       const [metadata, _] = await Metadata.deserialize(metadataAccount.data);
-      console.log(metadata);
       let logoRes = await fetch(metadata.data.uri);
       let logoJson = await logoRes.json();
       let { image } = logoJson;
-      setTokenMetadata({ tokenMetadata, ...metadata.data });
+      setTokenMetadata(prev => ({ ...prev, ...metadata.data }));
       setLogo(image);
       setLoaded(true);
-      setTokenAddress('')
+      setTokenAddress('');
     },
-    [tokenAddress]
+    [connection]
   );
 
   return (
@@ -69,7 +67,7 @@ export const GetMetadata: FC = () => {
                         logo
                       </dt>
                       <dd className='mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2'>
-                        <img src={logo} alt='token' className='w-1/4 h-full inline-block object-center object-cover lg:w-1/4 lg:h-full'/>
+                        <Image src={logo} alt='token' width={200} height={200} className='w-1/4 h-full inline-block object-center object-cover lg:w-1/4 lg:h-full'/>
                       </dd>
                     </div>
                     <div className='bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6'>

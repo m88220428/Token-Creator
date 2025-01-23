@@ -1,4 +1,3 @@
-// TODO: SignMessage
 import { useWallet } from '@solana/wallet-adapter-react';
 import bs58 from 'bs58';
 import { FC, useCallback } from 'react';
@@ -25,7 +24,7 @@ export const SignMessage: FC = () => {
             notify({ type: 'error', message: `Sign Message failed!`, description: error?.message });
             console.log('error', `Sign Message failed! ${error?.message}`);
         }
-    }, [publicKey, notify, signMessage]);
+    }, [publicKey, signMessage]);
 
     return (
         <div>

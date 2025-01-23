@@ -13,19 +13,30 @@ import {
 import { clusterApiUrl } from '@solana/web3.js';
 import { FC, ReactNode, useCallback, useMemo } from 'react';
 import { AutoConnectProvider, useAutoConnect } from './AutoConnectProvider';
+import NetworkContextProvider, { useNetwork } from './NetworkContextProvider';
 import { notify } from "../utils/notifications";
 
 const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const { autoConnect } = useAutoConnect();
-    const network = WalletAdapterNetwork.Devnet;
-    const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+    const { network } = useNetwork();
+    console.log('Current network:', network);
+    const walletNetwork = network === 'mainnet' 
+      ? WalletAdapterNetwork.Mainnet 
+      : WalletAdapterNetwork.Devnet;
+    const endpoint = useMemo(() => {
+      const endpoint = network === 'mainnet' 
+        ? 'https://api.mainnet.solana.com' 
+        : 'https://api.devnet.solana.com';
+      console.log('Using endpoint:', endpoint);
+      return endpoint;
+    }, [network]);
 
     const wallets = useMemo(
         () => [
             new PhantomWalletAdapter(),
             new SolflareWalletAdapter(),
-            new SolletWalletAdapter({ network }),
-            new SolletExtensionWalletAdapter({ network }),
+            new SolletWalletAdapter({ network: walletNetwork }),
+            new SolletExtensionWalletAdapter({ network: walletNetwork }),
             new TorusWalletAdapter(),
             // new LedgerWalletAdapter(),
             // new SlopeWalletAdapter(),
@@ -53,8 +64,10 @@ const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
 export const ContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     return (
-        <AutoConnectProvider>
-            <WalletContextProvider>{children}</WalletContextProvider>
-        </AutoConnectProvider>
+        <NetworkContextProvider>
+            <AutoConnectProvider>
+                <WalletContextProvider>{children}</WalletContextProvider>
+            </AutoConnectProvider>
+        </NetworkContextProvider>
     );
 };

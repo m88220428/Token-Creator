@@ -1,33 +1,50 @@
 import { FC, useCallback, useState } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
-import { MINT_SIZE, TOKEN_PROGRAM_ID, createInitializeMintInstruction, getMinimumBalanceForRentExemptMint, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createMintToInstruction } from '@solana/spl-token';
+import { 
+  MINT_SIZE, 
+  TOKEN_PROGRAM_ID, 
+  createInitializeMintInstruction, 
+  getMinimumBalanceForRentExemptMint, 
+  getAssociatedTokenAddress, 
+  createAssociatedTokenAccountInstruction, 
+  createMintToInstruction 
+} from '@solana/spl-token';
 import { createCreateMetadataAccountV3Instruction, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
+import { notify } from "../utils/notifications";
 
 export const CreateToken: FC = () => {
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
-  const [tokenName, setTokenName] = useState('')
-  const [symbol, setSymbol] = useState('')
-  const [metadata, setMetadata] = useState('')
-  const [amount, setAmount] = useState('')
-  const [decimals, setDecimals] = useState('')
+  const [tokenName, setTokenName] = useState('');
+  const [symbol, setSymbol] = useState('');
+  const [metadata, setMetadata] = useState('');
+  const [amount, setAmount] = useState('');
+  const [decimals, setDecimals] = useState('');
 
   const onClick = useCallback(async (form) => {
+    try {
+      if (!connection || !publicKey) {
+        notify({ type: 'error', message: 'Wallet not connected!' });
+        return;
+      }
+
       const lamports = await getMinimumBalanceForRentExemptMint(connection);
       const mintKeypair = Keypair.generate();
       const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, publicKey);
 
+      const [metadataAccount] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("metadata"),
+          PROGRAM_ID.toBuffer(),
+          mintKeypair.publicKey.toBuffer(),
+        ],
+        PROGRAM_ID
+      );
+
       const createMetadataInstruction = createCreateMetadataAccountV3Instruction(
         {
-          metadata: PublicKey.findProgramAddressSync(
-            [
-              Buffer.from("metadata"),
-              PROGRAM_ID.toBuffer(),
-              mintKeypair.publicKey.toBuffer(),
-            ],
-            PROGRAM_ID,
-          )[0],
+          metadata: metadataAccount,
           mint: mintKeypair.publicKey,
           mintAuthority: publicKey,
           payer: publicKey,
@@ -47,38 +64,45 @@ export const CreateToken: FC = () => {
             isMutable: false,
             collectionDetails: null,
           },
-        },
+        }
       );
 
       const createNewTokenTransaction = new Transaction().add(
         SystemProgram.createAccount({
-            fromPubkey: publicKey,
-            newAccountPubkey: mintKeypair.publicKey,
-            space: MINT_SIZE,
-            lamports: lamports,
-            programId: TOKEN_PROGRAM_ID,
+          fromPubkey: publicKey,
+          newAccountPubkey: mintKeypair.publicKey,
+          space: MINT_SIZE,
+          lamports,
+          programId: TOKEN_PROGRAM_ID,
         }),
         createInitializeMintInstruction(
           mintKeypair.publicKey, 
           form.decimals, 
           publicKey, 
           publicKey, 
-          TOKEN_PROGRAM_ID),
+          TOKEN_PROGRAM_ID
+        ),
         createAssociatedTokenAccountInstruction(
           publicKey,
           tokenATA,
           publicKey,
-          mintKeypair.publicKey,
+          mintKeypair.publicKey
         ),
         createMintToInstruction(
           mintKeypair.publicKey,
           tokenATA,
           publicKey,
-          form.amount * Math.pow(10, form.decimals),
+          form.amount * Math.pow(10, form.decimals)
         ),
         createMetadataInstruction
       );
-      await sendTransaction(createNewTokenTransaction, connection, {signers: [mintKeypair]});
+
+      await sendTransaction(createNewTokenTransaction, connection, { signers: [mintKeypair] });
+      notify({ type: 'success', message: 'Token created successfully!' });
+    } catch (error: any) {
+      notify({ type: 'error', message: 'Token creation failed', description: error?.message });
+      console.error(error);
+    }
   }, [publicKey, connection, sendTransaction]);
 
   return (
@@ -116,9 +140,16 @@ export const CreateToken: FC = () => {
       
       <button
         className="px-8 m-2 btn animate-pulse bg-gradient-to-r from-[#9945FF] to-[#14F195] hover:from-pink-500 hover:to-yellow-500 ..."
-        onClick={() => onClick({decimals: Number(decimals), amount: Number(amount), metadata: metadata, symbol: symbol, tokenName: tokenName})}>
-          <span>Create Token</span>
+        onClick={() => onClick({
+          decimals: Number(decimals), 
+          amount: Number(amount), 
+          metadata, 
+          symbol, 
+          tokenName
+        })}
+      >
+        <span>Create Token</span>
       </button>
     </div>
-  )
-}
+  );
+};
